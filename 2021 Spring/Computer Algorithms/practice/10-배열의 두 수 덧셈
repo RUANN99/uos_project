@@ -1,0 +1,85 @@
+//
+//  main.c
+//  alg_practice
+//
+//  Created by RUAN on 2021/06/07.
+//
+
+#include <stdio.h>
+#include <stdlib.h>
+
+#define SIZE 8
+
+
+typedef struct{
+    int elem;
+    int idx;
+} Dict;
+
+void sortDict(Dict D[]){
+    int elem, i, j, idx;
+    for(i=1; i<SIZE; i++){
+        elem = D[i].elem;
+        idx = D[i].idx;
+        for(j=i-1; j>=0&&D[j].elem>elem; j--){
+            D[j+1].elem = D[j].elem;
+            D[j+1].idx = D[j].idx;
+        }
+        D[j+1].elem = elem;
+        D[j+1].idx = idx;
+    }
+}
+
+void buildDict(Dict D[], int A[]){
+    for(int i=0; i<SIZE; i++){
+        D[i].elem = A[i];
+        D[i].idx = i;
+    }
+    sortDict(D);
+}
+
+int findElement(Dict D[], int v, int start){
+    for(int i=start+1; i<SIZE; i++){
+        if(D[i].elem == v){
+            return i;
+        }
+    }
+    return -1;
+}
+
+void findIdxPair(Dict D[], int s){
+    int j = 0;
+    for(int i=0; i<SIZE; i++){
+        int v = s-D[i].elem;
+        //printf("v=%d ",v);
+        j = findElement(D, v, i);
+        //printf("j=%d / ",j);
+        if(j != -1){
+            printf("found! [(%d.) %d + (%d.) %d]\n", D[i].idx, D[i].elem, D[j].idx, D[j].elem);
+            break;
+        }
+    }
+    if(j == -1){
+        printf("not found\n");
+    }
+}
+
+int main(int argc, const char * argv[]) {
+    
+    int A[SIZE] = {2, 21, 8, 3, 5, 1, 13, 1};
+    Dict D[SIZE];
+    
+    buildDict(D, A);
+    for(int i=0; i<SIZE; i++){
+        printf("[%d. %d] ",D[i].idx, D[i].elem);
+    }
+    printf("\n");
+    printf("\n");
+    
+    int s = 13;
+    findIdxPair(D, s);
+    printf("\n");
+    
+    return 0;
+}
+

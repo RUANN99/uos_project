@@ -1,0 +1,262 @@
+//
+//  main.c
+//  alg_practice
+//
+//  Created by RUAN on 2021/06/07.
+//
+
+#include <stdio.h>
+#include <stdlib.h>
+
+typedef struct{
+    int key;
+    struct TreeNode * parent, * left, * right;
+} TreeNode;
+
+typedef struct{
+    TreeNode * root;
+} TreeType;
+
+void initTree(TreeType* T){
+    T->root = (TreeNode*)malloc(sizeof(TreeNode));
+    T->root->parent = T->root->left = T->root->right = NULL;
+}
+
+int isExternal(TreeNode* w){
+    return(w->left == NULL && w->right == NULL);
+}
+
+TreeNode* treeSearch(TreeNode* w, int k){
+    if(isExternal(w)){
+        return w;
+    }
+    
+    if(k == w->key){
+        return w;
+    }
+    else if(k < w->key){
+        return treeSearch(w->left, k);
+    }
+    else{
+        return treeSearch(w->right, k);
+    }
+}
+
+int findElement(TreeType* T, int k){
+    TreeNode* w = treeSearch(T->root, k);
+    
+    if(isExternal(w)){
+        printf("%d doesn't exist\n", k);
+        return 0;
+    }
+    else{
+        printf("found ");
+        return w->key;
+    }
+}
+
+
+void expandExternal(TreeNode* w){
+    TreeNode* l = (TreeNode*)malloc(sizeof(TreeNode));
+    TreeNode* r = (TreeNode*)malloc(sizeof(TreeNode));
+    l->left = l->right = r->left = r->right = NULL;
+    l->parent = w;
+    r->parent = w;
+    w->left = l;
+    w->right = r;
+}
+
+
+void insertItem(TreeType*T, int k){
+    TreeNode* w = treeSearch(T->root, k);
+    while(!isExternal(w)){
+        w = treeSearch(w->right, k);
+    }
+    
+    w->key = k;
+    expandExternal(w);
+    
+}
+
+TreeNode* sibling(TreeNode* z){
+    TreeNode* w = z->parent;
+    if(w->left == z){
+        return w->right;
+    }
+    else{
+        return w->left;
+    }
+}
+
+void reduceExternal(TreeType* T, TreeNode* z){
+    TreeNode* w = z->parent;
+    TreeNode* g = w->parent;
+    TreeNode* zs = sibling(z);
+    zs->parent = g;
+    
+    if(g == NULL){
+        T->root = zs;
+    }
+    else{
+        if(w == g->left)
+            g->left = zs;
+        else
+            g->right = zs;
+    }
+}
+
+TreeNode* inOrderSucc(TreeNode* w){
+    w = w->right;
+    while (w->left != NULL) {
+        w = w->left;
+    }
+    return w;
+}
+
+int removeElement(TreeType* T, int k){
+    TreeNode* w = treeSearch(T->root, k);
+    
+    if(isExternal(w)){
+        printf("%d doesn't exist\n", k);
+        return 0;
+    }
+    TreeNode* z, * y;
+    z = w->left;
+    if(!isExternal(z)){
+        z = w->right;
+    }
+    if(isExternal(z)){
+        reduceExternal(T, z);
+    }
+    else{
+        z = inOrderSucc(w);
+        y = z->parent;
+        w->key = y->key;
+        reduceExternal(T, z);
+    }
+    
+    return k;
+}
+
+void preOrder(TreeNode* root){
+    if(isExternal(root)){
+        return;
+    }
+    printf("[%d] ", root->key);
+    preOrder(root->left);
+    preOrder(root->right);
+}
+
+void findAllElem(TreeType* T, int k){
+    int cnt=0;
+    TreeNode* w = treeSearch(T->root, k);
+    
+    while(!isExternal(w)){
+            cnt++;
+            w = treeSearch(w->right, k);
+        }
+        printf("%d개의 %d값이 존재함.\n", cnt, k);
+}
+
+int removeAllElement(TreeType* T, int k){
+    TreeNode* w = treeSearch(T->root, k);
+    TreeNode* z, * y;
+    
+    while(!isExternal(w)){
+        z = w->left;
+        if(!isExternal(z)){
+            z = w->right;
+        }
+        if(isExternal(z)){
+            reduceExternal(T, z);
+        }
+        else{
+            z = inOrderSucc(w);
+            y = z->parent;
+            w->key = y->key;
+            reduceExternal(T, z);
+        }
+        w = treeSearch(T->root, k);
+    }
+    
+    return k;
+}
+
+int findMaxKey(TreeType* T){
+    TreeNode* v = T->root;
+    while(!isExternal(v)){
+        v = v->right;
+    }
+    v=v->parent;
+    return v->key;
+}
+
+int findMinKey(TreeType* T){
+    TreeNode* v = T->root;
+    while(!isExternal(v)){
+        v = v->left;
+    }
+    v = v->parent;
+    return v->key;
+}
+
+int main(int argc, const char * argv[]) {
+    
+    TreeType* T = (TreeType*)malloc(sizeof(TreeType));
+    initTree(T);
+    
+    insertItem(T,9);
+    insertItem(T,5);
+    insertItem(T,311);
+    insertItem(T,24);
+    insertItem(T,18);
+    insertItem(T,1);
+    insertItem(T,24);
+    insertItem(T,24);
+    insertItem(T,18);
+    insertItem(T,14);
+    insertItem(T,224);
+    insertItem(T,34);
+    insertItem(T,46);
+    insertItem(T,98);
+    insertItem(T,1);
+    insertItem(T,1);
+    insertItem(T,10);
+    
+    preOrder(T->root);
+    printf("\n");
+    
+    findAllElem(T, 24);
+    
+    removeAllElement(T, 24);
+    printf("delete 24: ");
+    preOrder(T->root);
+    printf("\n");
+    
+    printf("max key: %d\n", findMaxKey(T));
+    printf("min key: %d\n", findMinKey(T));
+    
+    /*
+    int find, dele;
+    
+    printf("\n");
+    printf("find:");
+    scanf("%d",&find);
+    if(findElement(T, find)!=0){
+        printf("%d\n",findElement(T, find));
+    }
+    printf("\n");
+   
+    printf("delete:");
+    scanf("%d",&dele);
+    removeElement(T, dele);
+    printf("\n");
+     
+    preOrder(T->root);
+    printf("\n");
+    */
+    
+    printf("\n");
+    return 0;
+}
+

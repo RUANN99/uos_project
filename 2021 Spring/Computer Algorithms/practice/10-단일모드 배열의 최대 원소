@@ -1,0 +1,42 @@
+//
+//  main.c
+//  alg_practice
+//
+//  Created by RUAN on 2021/06/07.
+//
+
+#include <stdio.h>
+#include <stdlib.h>
+
+#define SIZE 8
+
+
+
+int findMax(int el[], int size){
+    int a=0, b=size-1;
+    int mid;
+    while(a<b){
+        mid = (a+b)/2;
+        if(el[mid]<el[mid+1]){
+            a=mid+1;
+        }
+        else{
+            b=mid;
+        }
+    }
+    return a;
+}
+
+
+int main(int argc, const char * argv[]) {
+    
+    int el[SIZE] = {-30, -21, -10, 1, 9, 40, 30, 22};
+    
+    int max = el[findMax(el, SIZE)];
+    
+    printf("%d\n",max);
+    
+    
+    return 0;
+}
+

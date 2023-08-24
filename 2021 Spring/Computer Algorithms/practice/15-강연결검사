@@ -1,0 +1,106 @@
+//
+//  main.c
+//  alg_practice
+//
+//  Created by RUAN on 2021/06/07.
+//
+
+#include <stdio.h>
+#include <stdlib.h>
+
+#define SIZE 10
+#define TRUE 1
+#define FALSE 0
+
+typedef struct{
+    int n,m; // n = vertex; m = edge;
+    int adj_mat[SIZE][SIZE];
+} GraphType;
+
+void init(GraphType* g){
+    for(int row=0; row<SIZE; row++){
+        for(int col=0; col<SIZE; col++){
+            g->adj_mat[row][col] = 0;
+        }
+    }
+}
+
+void insertEdge(GraphType* g, int start, int end){
+    if((start>=g->n) || (end>=g->n)){
+        printf("no edge to insert\n");
+        return;
+    }
+    g->adj_mat[start][end] = 1;
+    //g->adj_mat[end][start] = 1;
+}
+
+void printAdjMat(GraphType* g){
+    printf("\n");
+    for(int row=0; row<g->n; row++){
+        printf(" | ");
+        for(int col=0; col<g->n; col++){
+            printf(" %d ", g->adj_mat[row][col]);
+        }
+        printf(" |\n");
+    }
+}
+
+void dfsMat(GraphType* g, int visited[], int v){
+    visited[v] = TRUE;
+    printf("vertex[%d] ", v+1);
+    for(int w=0; w<g->n; w++){
+        if(g->adj_mat[v][w] && !visited[w]){
+            dfsMat(g, visited, w);
+        }
+    }
+}
+
+void revMat(GraphType* g, int v){
+    GraphType r;
+    init(&r);
+    r.n = g->n;
+    int visited[SIZE] = {FALSE};
+    
+    for(int row=0; row<g->n; row++){
+        for(int col=0; col<g->n; col++){
+            r.adj_mat[col][row] = g->adj_mat[row][col];
+        }
+    }
+    printAdjMat(&r);
+    printf("\n");
+    dfsMat(&r, visited, v-1);
+}
+
+int main(){
+    
+    GraphType g;
+    init(&g);
+    
+    int n,m,v;
+    int start, end;
+    
+    printf("insert number of vertex and edge : ");
+    scanf("%d %d", &g.n, &g.m); //n=vertex, m=edge
+    
+    for(int i=0; i<g.m; i++){
+        scanf("%d %d", &start, &end);
+        insertEdge(&g, start-1, end-1);
+    }
+    
+    printAdjMat(&g);
+    
+    int visited[SIZE] = {FALSE};
+    printf("\n");
+    printf("find : ");
+    scanf("%d", &v);
+    printf("\ndfs : \n");
+    dfsMat(&g, visited, v);
+    printf("\n\nrev : \n");
+    revMat(&g, v);
+    
+    printf("\n");
+    
+    
+    return 0;
+}
+
