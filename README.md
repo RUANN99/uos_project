@@ -1,2 +1,2 @@
 # uos_project
-projects I'd done during college.
+Projects I've done during college.
