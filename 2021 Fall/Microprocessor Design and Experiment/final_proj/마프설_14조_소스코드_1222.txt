@@ -1,0 +1,261 @@
+/*
+ * 마프설 기말프로젝트 14조
+ * [이대현/2016920032] [루안리치/2018920065]
+ */ 
+ 
+ 
+#include <avr/io.h>
+#include <avr/interrupt.h>
+#define F_CPU 16000000UL
+#include <util/delay.h>
+#define ON 1
+#define OFF 0
+#define DO 0
+#define RE 1
+#define MI 2
+#define FA 3
+#define SOL 4
+#define LA 5
+#define SI 6
+#define DDO 7
+#define EOS -1
+ 
+volatile int tone;
+volatile int preTone = EOS;
+volatile int state = OFF;
+volatile int isRecord = 0;
+volatile int rNo = 0;
+char f_table[8] = {19, 45, 69, 79, 99, 117, 124, 139};
+	// I modified the data for better tune (with my perfect pitch)
+	// c 19 , c# 33, d 45, d# 56, e 69, f 79, f# 88, g 99, g# 107, a 117, a# 124, b 132, c 139
+int LittleStar[] = {
+	SOL, MI, MI, MI, FA, RE, RE, RE, DO, RE, MI, FA, SOL, SOL, SOL, SOL,
+	SOL, MI, MI, MI, FA, RE, RE, RE, DO, MI, SOL, SOL, DO, DO, DO, DO, EOS
+};
+int WishYouAMerryXmas[] = {
+	DO, DO, FA, FA, FA, SOL, FA, MI, RE, RE, RE, RE, RE, RE, SOL, SOL, SOL, LA, SOL, FA, MI, MI, DO, DO,
+	DO, DO, LA, LA, LA, SI, LA, SOL, FA, FA, RE, RE, DO, DO, RE, RE, SOL, SOL, MI, MI, FA, FA, FA, FA, EOS
+};
+int record[50];
+ 
+ISR(TIMER0_OVF_vect)
+{
+	
+	if(isRecord == 1 && tone != preTone){	// recording
+		record[rNo] = tone;
+		++rNo;
+		isRecord = 0;
+		preTone = tone;	// 중복녹음 방지
+	}
+	if(tone == EOS){	// to stop
+		return;
+	}
+	
+	if(state == OFF){
+		PORTB = 0x00;
+		state = ON;
+	}
+	else{
+		PORTB = 0x10;
+		state = OFF;
+	}
+	TCNT0 = f_table[tone];
+}
+ 
+void initRecord(){		// initialize record list
+	for(int i = 0; i<50; i++){
+		record[i] = EOS;
+	}
+}
+ 
+void Show(int song[]){		// play songs/record
+	int i=0;
+	TCNT0 = f_table[song[i]];
+	sei();
+	do{
+		
+		tone = song[i++];
+		_delay_ms(500);
+		if((PINE & 0x10) == 0){		// stop
+			tone = EOS;
+		}
+	}while(tone!=EOS);
+}
+ 
+ 
+void StartRecord(){
+	int j[2] = {0x3c, 0x3f};
+	int sign = 0;
+	DDRA = 0xff;
+	DDRB = 0x00;	// 0x10 too loudly
+	DDRF = 0x00;	// keyboard
+	DDRE = 0x00;	// stop by sw2
+	TCCR0 = 0X03;
+	TIMSK = 0X01;
+ 
+	initRecord();
+	rNo = 0;
+	
+	while(sign != EOS){
+		PORTA = j[0];	// wait for data
+		if((PINF & 0x01) != 0x00){
+			isRecord = 1;
+			PORTA = j[1];
+			tone = DO;		
+			TCNT0 = f_table[tone];
+			sei();
+		}
+		else if ((PINF & 0x02) != 0x00){
+			isRecord = 1;
+			PORTA = j[1];
+			tone = RE;
+			TCNT0 = f_table[tone];
+			sei();
+		}
+		else if ((PINF & 0x04) != 0x00){
+			isRecord = 1;
+			PORTA = j[1];
+			tone = MI;	
+			TCNT0 = f_table[tone];
+			sei();
+		}
+		else if ((PINF & 0x08) != 0x00){
+			isRecord = 1;
+			PORTA = j[1];
+			tone = FA;
+			TCNT0 = f_table[tone];
+			sei();
+		}
+		else if ((PINF & 0x10) != 0x00){
+			isRecord = 1;
+			PORTA = j[1];
+			tone = SOL;
+			TCNT0 = f_table[tone];
+			sei();
+		}
+		else if ((PINF & 0x20) != 0x00){
+			isRecord = 1;
+			PORTA = j[1];
+			tone = LA;
+			TCNT0 = f_table[tone];
+			sei();
+		}
+		else if ((PINF & 0x40) != 0x00){
+			isRecord = 1;
+			PORTA = j[1];
+			tone = SI;
+			TCNT0 = f_table[tone];
+			sei();
+		}
+		else if ((PINF & 0x80) != 0x00){
+			isRecord = 1;
+			PORTA = j[1];
+			tone = DDO;
+			TCNT0 = f_table[tone];
+			sei();
+		}
+		else if ((PINE & 0x10) == 0x00){	// 중복녹음 방지 해체
+			preTone = EOS;
+		}
+		else if ((PINE & 0x20) == 0x00){
+			isRecord = 1;
+			PORTA = 0x18;
+			tone = EOS;
+			TCNT0 = f_table[tone];
+			sei();
+			sign = EOS;
+		}
+	}
+ 
+	PORTA = 0xff;	// record finished
+	_delay_ms(300);
+	PORTA = 0x00;
+	_delay_ms(500);
+	PORTA = 0xff;
+}
+ 
+ 
+int main(void)
+{
+	DDRA = 0xff;
+	DDRB = 0x00; // 0x10 too loudly
+	DDRE = 0x00; // sw1, sw2
+	DDRF = 0x00; // keyboard
+	DDRG = 0x00; // tools
+	TCCR0 = 0X03;
+	TIMSK = 0X01;
+	
+	PORTA = 0x99; // show ready
+	
+	while(1){
+		
+		if((PINF & 0x01) != 0x00){			//sf-0 DO
+			PORTA = 0x01;
+			tone = DO;
+			TCNT0 = f_table[tone];
+			sei();
+		}
+		else if ((PINF & 0x02) != 0x00){	//sf-1 RE
+			PORTA = 0x02;
+			tone = RE;
+			TCNT0 = f_table[tone];
+			sei();
+		}
+		else if ((PINF & 0x04) != 0x00){	//sf-2 MI
+			PORTA = 0x04;
+			tone = MI;
+			TCNT0 = f_table[tone];
+			sei();
+		}
+		else if ((PINF & 0x08) != 0x00){	//sf-3 FA
+			PORTA = 0x08;
+			tone = FA;
+			TCNT0 = f_table[tone];
+			sei();
+		}
+		else if ((PINF & 0x10) != 0x00){	//sf-4 SOL
+			PORTA = 0x10;
+			tone = SOL;
+			TCNT0 = f_table[tone];
+			sei();
+		}
+		else if ((PINF & 0x20) != 0x00){	//sf-5 LA
+			PORTA = 0x20;
+			tone = LA;
+			TCNT0 = f_table[tone];
+			sei();
+		}
+		else if ((PINF & 0x40) != 0x00){	//sf-6 SI
+			PORTA = 0x40;
+			tone = SI;
+			TCNT0 = f_table[tone];
+			sei();
+		}
+		else if ((PINF & 0x80) != 0x00){	//sf-7 DDO
+			PORTA = 0x80;
+			tone = DDO;
+			TCNT0 = f_table[tone];
+			sei();
+		}
+		else if ((PINE & 0x10) == 0x00){	//reset
+			PORTA = 0xff;
+			tone = EOS;
+		}
+		else if ((PING & 0x01) != 0x00){	//sg-0 = little star
+			PORTA = 0x33;
+			Show(LittleStar);
+		}
+		else if((PING & 0x04) != 0x00){		//sg-2 = we wish you a merry christmas
+			PORTA = 0xCC;
+			Show(WishYouAMerryXmas);
+		}
+		else if((PING & 0x08) != 0x00){		//sg-3 = show record
+			PORTA = 0x81;
+			Show(record);
+		}
+		else if ((PING & 0x10) != 0x00){	//sg-4 = start record
+			StartRecord();
+		}
+	}
+}
+ 
