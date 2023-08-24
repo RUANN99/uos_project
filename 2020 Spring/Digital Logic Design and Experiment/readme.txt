@@ -13,8 +13,7 @@ Requirements:
 3. When an arrow key (up/down/left/right) is pressed, the cursor moves to the adjacent cell in that direction and the previous position is colored in black.
   – If might be tricky to handle the key press, since you may get lots of consecutive “key pressing” events even when you press a key very shortly. To handle this issue, when a key is pressed, you have to “wait” until the key is released and then proceed to handle the key event.
   – The cursor is not allowed to move outside the screen.
-4. Submit a README.txt file that describes exactly what you succeeded to implement. If your description is not consistent with your program, you may get penalty.
-Your README.txt file should contain the following checklist.
+4. Checklist
   – Did you succeed to draw the grid lines?
   – Did you succeed to draw the cursor?
   – Did you succeed to move the cursor when an arrow key is pressed?
