@@ -1,5 +1,5 @@
 # uos_project
-Projects I've done during college.
+Projects and assignments I've done during college.
 
 
 2020 Spring
